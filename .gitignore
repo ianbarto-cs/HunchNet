@@ -1,0 +1,16 @@
+# Environments
+venv/
+.venv/
+env/
+
+# Python cache & build files
+__pycache__/
+*.py[cod]
+*.so
+
+# Database / Local data
+db/
+*.sqlite3
+
+# Environment variables / Secrets
+.env
