@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Form, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from cryptography.hazmat.primitives.asymmetric import ec
 import sqlite3
 import bcrypt
 import uuid
@@ -91,6 +92,7 @@ def get_dashboard_page():
         <div class="sidebar">
             <div class="sidebar-header">
                 <h2>Messages</h2>
+                <a class="sidebar-new-message" href="#">+</a>
             </div>
             <ul class="contact-list">
                #This is where contacts will go eventually.
@@ -99,10 +101,10 @@ def get_dashboard_page():
         </div>
         <div class="chat-area">
             <div class="chat-messages"></div>
-            <div class="chat-input-area">
+            <form class="chat-input-area" method="post" action="/send_message">
                 <input type="text" placeholder="Message...">
                 <button>Send</button>
-            </div>
+            </form>
         </div>
     </div>
 </body>
@@ -196,6 +198,26 @@ def dashboard(session_token: str = Cookie(default=None)):
         return RedirectResponse(url="/", status_code=302)
 
     return get_dashboard_page()
+
+@app.get("/send_message")
+def send_message(session_token: str = Cookie(default=None)):
+    if not session_token:
+        return RedirectResponse(url="/", status_code=302)
+
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM sessions WHERE token_hash = ? AND revoked_at IS NULL AND expires_at > datetime('now')",
+        (session_token,)
+    )
+    result = cursor.fetchone()
+    conn.close()
+
+    if not result:
+        return RedirectResponse(url="/", status_code=302)
+
+
+    
 
 @app.get("/logout")
 def logout(session_token: str = Cookie(default=None)):
