@@ -1,3 +1,5 @@
+This file was created using gemini as it simply ignores files and directories - not part of project.
+
 # Environments
 venv/
 .venv/
@@ -14,3 +16,4 @@ db/
 
 # Environment variables / Secrets
 .env
+

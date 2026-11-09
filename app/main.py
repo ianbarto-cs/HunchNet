@@ -57,6 +57,10 @@ def get_register_page():
         <h1>HunchNet - Register</h1>
         <form id="register-form" method="post" action="/register">
             <div class="form-group">
+                <label for="display_name">Display Name</label>
+                <input type="text" id="display_name" name="display_name" required>
+            </div>
+            <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
             </div>
@@ -140,7 +144,7 @@ def login(username: str = Form(...), password: str = Form(...)):
     return response
 
 @app.post("/register")
-def register(username: str = Form(...), password: str = Form(...)):
+def register(username: str = Form(...), password: str = Form(...), display_name: str = Form(...)):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
@@ -148,13 +152,18 @@ def register(username: str = Form(...), password: str = Form(...)):
     if cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=400, detail="Username already exists")
+    
+    cursor.execute("SELECT id FROM users WHERE display_name = ?", (display_name,))
+    if cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=400, detail="Display name already exists")
 
     user_id = str(uuid.uuid4())
     password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
+    time = datetime.datetime.now().isoformat()
     cursor.execute(
-        "INSERT INTO users (id, username, display_name) VALUES (?, ?, ?)",
-        (user_id, username, username)
+        "INSERT INTO users (id, username, display_name, created_at) VALUES (?, ?, ?, ?)",
+        (user_id, username, display_name, time)
     )
     cursor.execute(
         "INSERT INTO auth_credentials (id, user_id, password_hash) VALUES (?, ?, ?)",
